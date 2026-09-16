@@ -1,0 +1,5 @@
+### localhost 3k
+GET http://localhost:3000
+
+### pokemons
+GET http://localhost:3000/pokemon
