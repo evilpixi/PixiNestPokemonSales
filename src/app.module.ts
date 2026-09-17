@@ -5,7 +5,6 @@ import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { PokemonModule } from './pokemon/pokemon.module.js';
 import { SaleModule } from './sale/sale.module.js';
-import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -14,8 +13,7 @@ import { ConfigModule } from '@nestjs/config';
       serveRoot: '/app',
     }),
     PokemonModule,
-    SaleModule,
-    ConfigModule
+    SaleModule
   ],
   controllers: [AppController],
   providers: [AppService],
