@@ -1,28 +1,22 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePokemonDto } from './dto/create-pokemon.dto.js';
 import { UpdatePokemonDto } from './dto/update-pokemon.dto.js';
-import { Pokemon } from './entities/pokemon.entity.js';
-import POKEMON_LIST from './consts/pokemon-list.js';
+import { PokemonRepository } from './pokemon.repository.js';
 
 @Injectable()
 export class PokemonService {
-  private pokemons: Pokemon[] = [...POKEMON_LIST];
+  constructor(private readonly pokemonRepository: PokemonRepository) {}
 
   create(createPokemonDto: CreatePokemonDto) {
-    const newID = this.pokemons.reduce((maxId, p) => Math.max(maxId, p.id), 0) + 1;
-    const newPokemon = new Pokemon(newID, createPokemonDto);
-
-    this.pokemons.push(newPokemon);
-
-    return newPokemon;
+    return this.pokemonRepository.create(createPokemonDto);
   }
 
   findAll() {
-    return this.pokemons;
+    return this.pokemonRepository.findAll();
   }
 
   findOne(id: number) {
-    const pokemon = this.pokemons.find(p => p.id === id);
+    const pokemon = this.pokemonRepository.findById(id);
 
     if (!pokemon) throw new NotFoundException(`Pokemon with id ${id} not found`);
 
@@ -30,21 +24,18 @@ export class PokemonService {
   }
 
   findAllAvailable() {
-    return this.pokemons.filter(p => !p.sold);
+    return this.pokemonRepository.findAllAvailable();
   }
 
   findAllSold() {
-    return this.pokemons.filter(p => p.sold);
+    return this.pokemonRepository.findAllSold();
   }
 
   update(id: number, updatePokemonDto: UpdatePokemonDto) {
-    const pokemon = this.findOne(id);
+    this.findOne(id);
+    this.pokemonRepository.update(id, updatePokemonDto);
 
-    if (updatePokemonDto.name !== undefined) pokemon.name = updatePokemonDto.name;
-    if (updatePokemonDto.level !== undefined) pokemon.level = updatePokemonDto.level;
-    if (updatePokemonDto.price !== undefined) pokemon.price = updatePokemonDto.price;
-
-    return pokemon;
+    return this.findOne(id);
   }
 
   buyPokemon(id: number) {
@@ -54,8 +45,8 @@ export class PokemonService {
 
     // apply charge here;
 
-    pokemon.sold = true;
+    this.pokemonRepository.markAsSold(id);
 
-    return pokemon;
+    return this.findOne(id);
   }
 }
