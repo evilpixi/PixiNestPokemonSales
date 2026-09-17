@@ -1,5 +1,51 @@
-### localhost 3k
-GET http://localhost:3000
+@baseUrl = http://localhost:3000
 
-### pokemons
-GET http://localhost:3000/pokemon
+### localhost 3k
+GET {{baseUrl}}
+
+### pokemons - listar todos
+GET {{baseUrl}}/pokemon
+
+### pokemons - listar disponibles
+GET {{baseUrl}}/pokemon/available
+
+### pokemons - listar vendidos
+GET {{baseUrl}}/pokemon/sold
+
+### pokemons - obtener uno por id
+GET {{baseUrl}}/pokemon/1
+
+### pokemons - obtener uno inexistente (404)
+GET {{baseUrl}}/pokemon/999
+
+### pokemons - crear
+POST {{baseUrl}}/pokemon
+Content-Type: application/json
+
+{
+  "name": "Bulbasaur",
+  "level": 8,
+  "price": 120
+}
+
+### pokemons - actualizar (parcial)
+PATCH {{baseUrl}}/pokemon/1
+Content-Type: application/json
+
+{
+  "level": 10
+}
+
+### pokemons - actualizar inexistente (404)
+PATCH {{baseUrl}}/pokemon/999
+Content-Type: application/json
+
+{
+  "level": 10
+}
+
+### pokemons - comprar
+POST {{baseUrl}}/pokemon/1/buy
+
+### pokemons - comprar ya vendido (409)
+POST {{baseUrl}}/pokemon/1/buy

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, ParseIntPipe } from '@nestjs/common';
 import { PokemonService } from './pokemon.service.js';
 import { CreatePokemonDto } from './dto/create-pokemon.dto.js';
 import { UpdatePokemonDto } from './dto/update-pokemon.dto.js';
@@ -17,13 +17,28 @@ export class PokemonController {
     return this.pokemonService.findAll();
   }
 
+  @Get('available')
+  findAllAvailable() {
+    return this.pokemonService.findAllAvailable();
+  }
+
+  @Get('sold')
+  findAllSold() {
+    return this.pokemonService.findAllSold();
+  }
+
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.pokemonService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.pokemonService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePokemonDto: UpdatePokemonDto) {
-    return this.pokemonService.update(+id, updatePokemonDto);
+  update(@Param('id', ParseIntPipe) id: number, @Body() updatePokemonDto: UpdatePokemonDto) {
+    return this.pokemonService.update(id, updatePokemonDto);
+  }
+
+  @Post(':id/buy')
+  buy(@Param('id', ParseIntPipe) id: number) {
+    return this.pokemonService.buyPokemon(id);
   }
 }
