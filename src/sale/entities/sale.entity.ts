@@ -8,6 +8,7 @@ export class Sale {
     public price: number;
     public date: string;
     public stripeData: string;
+    private status: SaleStatus;
 
     constructor(id: number, createSaleDto: CreateSaleDto) {
         this.id = id;
@@ -16,6 +17,21 @@ export class Sale {
         this.productId = createSaleDto.productId;
         this.price = createSaleDto.price;
         this.date = createSaleDto.date;
-        this.stripeData = this.stripeData;
+        this.stripeData = createSaleDto.stripeData;
+        this.status = SaleStatus.PENDING;
     }
+
+    setStatus(newStatus: SaleStatus) {
+        this.status = newStatus;
+    }
+
+    getStatus(): SaleStatus {
+        return this.status;
+    }
+}
+
+export enum SaleStatus {
+    PENDING = 'PENDING',
+    COMPLETED = 'COMPLETED',
+    REJECTED = 'REJECTED'
 }

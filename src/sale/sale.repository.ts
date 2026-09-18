@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { db } from "../storage/db.js";
 import { CreateSaleDto } from "./dto/create-sale.dto.js";
-import { Sale } from "./entities/sale.entity.js";
+import { Sale, SaleStatus } from "./entities/sale.entity.js";
 
 type SaleRow = {
   id: number;
@@ -11,23 +11,30 @@ type SaleRow = {
   price: number;
   date: string;
   stripeData: string;
+  status: SaleStatus;
 }
 
 function rowToSale(row: SaleRow): Sale {
-  return {
-    id: row.id,
+  return new Sale(row.id, {
     client: row.client,
     address: row.address,
     productId: row.productId,
     price: row.price,
     date: row.date,
-    stripeData: row.stripeData
-  }
+    stripeData: row.stripeData,
+    status: row.status
+  })
 }
 
 @Injectable()
 export class SaleRepository {
   constructor() {}
+
+  findAll(): Sale[] {
+    const rows = db.prepare('SELECT * FROM sale').all() as SaleRow[]
+    
+    return rows.map(rowToSale)
+  }
 
   findById(id: number): Sale | undefined {
     const row = db.prepare('SELECT * FROM sale WHERE id = ?').get(id) as SaleRow | undefined;
