@@ -6,5 +6,6 @@ import { PokemonRepository } from './pokemon.repository.js';
 @Module({
   controllers: [PokemonController],
   providers: [PokemonService, PokemonRepository],
+  exports: [PokemonService]
 })
 export class PokemonModule {}
