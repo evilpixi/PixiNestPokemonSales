@@ -45,7 +45,7 @@ export class SaleRepository {
   create(createSaleDto: CreateSaleDto): Sale {
     const s = createSaleDto;
     const { lastInsertRowid } = db
-      .prepare('INSERT INTO sale (client, address, productid, price, date, stripedata VALUES (?, ?, ?, ?, ?, ?)')
+      .prepare('INSERT INTO sale (client, address, productid, price, date, stripedata) VALUES (?, ?, ?, ?, ?, ?)')
       .run(s.client, s.address, s.productId, s.price, s.date, s.stripeData);
 
     return this.findById(Number(lastInsertRowid))!;
