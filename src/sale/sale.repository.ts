@@ -42,11 +42,29 @@ export class SaleRepository {
     return row ? rowToSale(row) : undefined;
   }
 
+  findByStripeSessionId(stripeSessionId: string): Sale | undefined {
+    const row = db.prepare('SELECT * FROM sale WHERE stripedata = ?').get(stripeSessionId) as SaleRow | undefined;
+
+    return row ? rowToSale(row) : undefined;
+  }
+
+  markAsCompleted(id: number): Sale | undefined {
+    db.prepare('UPDATE sale SET status = ? WHERE id = ?').run(SaleStatus.COMPLETED, id);
+
+    return this.findById(id);
+  }
+
+  markAsRejected(id: number): Sale | undefined {
+    db.prepare('UPDATE sale SET status = ? WHERE id = ?').run(SaleStatus.REJECTED, id);
+
+    return this.findById(id);
+  }
+
   create(createSaleDto: CreateSaleDto): Sale {
     const s = createSaleDto;
     const { lastInsertRowid } = db
-      .prepare('INSERT INTO sale (client, address, productid, price, date, stripedata) VALUES (?, ?, ?, ?, ?, ?)')
-      .run(s.client, s.address, s.productId, s.price, s.date, s.stripeData);
+      .prepare('INSERT INTO sale (client, address, productid, price, date, stripedata, status) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .run(s.client, s.address, s.productId, s.price, s.date, s.stripeData, s.status);
 
     return this.findById(Number(lastInsertRowid))!;
   }

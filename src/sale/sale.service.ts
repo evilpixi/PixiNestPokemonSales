@@ -26,8 +26,8 @@ export class SaleService {
   async create(createSaleDto: CreateSaleDto) {
     const pokemon = this.pokemonService.findOne(createSaleDto.productId);
 
-    if (!pokemon) throw NotFoundException;
-    if (pokemon.sold) throw NotAcceptableException;
+    if (!pokemon) throw new NotFoundException(`Pokemon with id ${createSaleDto.productId} not found`);
+    if (pokemon.sold) throw new NotAcceptableException(`Pokemon with id ${createSaleDto.productId} is already sold`);
 
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = []
     lineItems.push({
@@ -62,7 +62,7 @@ export class SaleService {
       line_items: items,
       success_url: `${frontendUrl}:${port}/success`,
       cancel_url:  `${frontendUrl}:${port}/cancel`,
-      metadata: { pokemonId: pokemonId }
+      metadata: { pokemonId: String(pokemonId) }
     });
   }
 }
