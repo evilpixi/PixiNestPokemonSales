@@ -6,28 +6,28 @@ const POKEMON_LIST: Pokemon[] = [
     name: 'Pikachu',
     level: 5,
     sold: false,
-    price: 100
+    price: 0.55
   },
   {
     id: 2,
     name: 'Charmander',
     level: 15,
     sold: false,
-    price: 150
+    price: 0.60
   },
   {
     id: 3,
     name: 'Mandibuzz',
     level: 50,
     sold: false,
-    price: 220
+    price: 0.50
   },
   {
     id: 4,
     name: 'Lairon',
     level: 5,
     sold: false,
-    price: 50
+    price: 0.52
   },
 ]
 

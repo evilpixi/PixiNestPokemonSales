@@ -1,4 +1,21 @@
-import { CreateSaleDto } from "../dto/create-sale.dto.js";
+export enum SaleStatus {
+    PENDING = 'PENDING',
+    COMPLETED = 'COMPLETED',
+    REJECTED = 'REJECTED'
+}
+
+export type SaleData = {
+    client: string;
+    address: string;
+    productId: number;
+    price: number;
+    date: string;
+    stripeData: string;
+    status: SaleStatus;
+}
+
+// What the service provides when it creates a sale; `date` and `status` are set by the repository.
+export type NewSale = Omit<SaleData, 'date' | 'status'>;
 
 export class Sale {
     public readonly id: number;
@@ -8,30 +25,16 @@ export class Sale {
     public price: number;
     public date: string;
     public stripeData: string;
-    private status: SaleStatus;
+    public status: SaleStatus;
 
-    constructor(id: number, createSaleDto: CreateSaleDto) {
+    constructor(id: number, data: SaleData) {
         this.id = id;
-        this.client = createSaleDto.client;
-        this.address = createSaleDto.address;
-        this.productId = createSaleDto.productId;
-        this.price = createSaleDto.price;
-        this.date = createSaleDto.date;
-        this.stripeData = createSaleDto.stripeData;
-        this.status = SaleStatus.PENDING;
+        this.client = data.client;
+        this.address = data.address;
+        this.productId = data.productId;
+        this.price = data.price;
+        this.date = data.date;
+        this.stripeData = data.stripeData;
+        this.status = data.status;
     }
-
-    setStatus(newStatus: SaleStatus) {
-        this.status = newStatus;
-    }
-
-    getStatus(): SaleStatus {
-        return this.status;
-    }
-}
-
-export enum SaleStatus {
-    PENDING = 'PENDING',
-    COMPLETED = 'COMPLETED',
-    REJECTED = 'REJECTED'
 }

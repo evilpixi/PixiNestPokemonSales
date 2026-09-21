@@ -25,7 +25,7 @@ Content-Type: application/json
 {
   "name": "Bulbasaur",
   "level": 8,
-  "price": 120
+  "price": 0.55
 }
 
 ### pokemons - actualizar (parcial)
@@ -49,3 +49,42 @@ POST {{baseUrl}}/pokemon/1/buy
 
 ### pokemons - comprar ya vendido (409)
 POST {{baseUrl}}/pokemon/1/buy
+
+### sales - crear checkout (devuelve { sale, url }; abrir la url para pagar en Stripe)
+POST {{baseUrl}}/sale
+Content-Type: application/json
+
+{
+  "client": "Ash Ketchum",
+  "address": "Pallet Town 1",
+  "productId": 1
+}
+
+### sales - listar
+GET {{baseUrl}}/sale
+
+### sales - obtener una por id
+GET {{baseUrl}}/sale/1
+
+### sales - actualizar cliente/direccion (precio y status no se pueden tocar)
+PATCH {{baseUrl}}/sale/1
+Content-Type: application/json
+
+{
+  "address": "Viridian City 2"
+}
+
+### sales - borrar (409 si ya esta COMPLETED)
+DELETE {{baseUrl}}/sale/1
+
+### sales - paginas de retorno de Stripe (redirigen a /app)
+GET {{baseUrl}}/sale/success?session_id=cs_test_123
+
+###
+GET {{baseUrl}}/sale/cancel
+
+### sales - webhook sin firma (400). El real lo envia Stripe: stripe listen --forward-to localhost:3000/sale/webhook
+POST {{baseUrl}}/sale/webhook
+Content-Type: application/json
+
+{}

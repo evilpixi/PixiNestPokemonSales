@@ -38,6 +38,17 @@ export class PokemonService {
     return this.findOne(id);
   }
 
+  // Idempotent on purpose: the Stripe webhook can be delivered more than once.
+  markAsSold(id: number) {
+    const pokemon = this.findOne(id);
+
+    if (pokemon.sold) return pokemon;
+
+    this.pokemonRepository.markAsSold(id);
+
+    return this.findOne(id);
+  }
+
   buyPokemon(id: number) {
     const pokemon = this.findOne(id);
 

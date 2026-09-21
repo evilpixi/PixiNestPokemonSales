@@ -13,7 +13,20 @@ const tbody = document.getElementById('pokemon-tbody');
 const emptyState = document.getElementById('empty-state');
 const filterButtons = document.querySelectorAll('.filter-btn');
 
+const SALE_BASE = '/sale';
+const buyDialog = document.getElementById('buy-dialog');
+const buyForm = document.getElementById('buy-form');
+const buyTitle = document.getElementById('buy-title');
+const buyPokemonIdInput = document.getElementById('buy-pokemon-id');
+const buyClientInput = document.getElementById('buy-client');
+const buyAddressInput = document.getElementById('buy-address');
+const buySubmitBtn = document.getElementById('buy-submit-btn');
+const buyCancelBtn = document.getElementById('buy-cancel-btn');
+const buyError = document.getElementById('buy-error');
+const checkoutBanner = document.getElementById('checkout-banner');
+
 let currentFilter = 'all';
+let currentPokemons = [];
 
 function endpointForFilter(filter) {
   if (filter === 'available') return `${API_BASE}/available`;
@@ -58,8 +71,8 @@ function escapeHtml(value) {
 
 async function loadPokemons() {
   try {
-    const pokemons = await fetchPokemons();
-    renderPokemons(pokemons);
+    currentPokemons = await fetchPokemons();
+    renderPokemons(currentPokemons);
   } catch (err) {
     formError.textContent = err.message;
     formError.hidden = false;
@@ -135,14 +148,70 @@ async function handleTableClick(event) {
   }
 
   if (action === 'buy') {
-    const res = await fetch(`${API_BASE}/${id}/buy`, { method: 'POST' });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      formError.textContent = body.message || 'No se pudo comprar el pokemon';
-      formError.hidden = false;
-      return;
-    }
-    await loadPokemons();
+    const pokemon = currentPokemons.find((p) => p.id === Number(id));
+    if (pokemon) openBuyDialog(pokemon);
+  }
+}
+
+function openBuyDialog(pokemon) {
+  buyForm.reset();
+  buyError.hidden = true;
+  buyPokemonIdInput.value = pokemon.id;
+  buyTitle.textContent = `Comprar ${pokemon.name} ($${Number(pokemon.price).toFixed(2)})`;
+  buyDialog.showModal();
+}
+
+// Creates the sale on the backend and sends the buyer to Stripe's hosted checkout.
+// The pokemon is only marked as sold later, when Stripe confirms the payment via webhook.
+async function handleBuySubmit(event) {
+  event.preventDefault();
+  buyError.hidden = true;
+  buySubmitBtn.disabled = true;
+
+  try {
+    const res = await fetch(SALE_BASE, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client: buyClientInput.value.trim(),
+        address: buyAddressInput.value.trim(),
+        productId: Number(buyPokemonIdInput.value),
+      }),
+    });
+
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.message || 'No se pudo iniciar el pago');
+    if (!body.url) throw new Error('El servidor no devolvio la URL de pago');
+
+    window.location.href = body.url;
+  } catch (err) {
+    buyError.textContent = err.message;
+    buyError.hidden = false;
+    buySubmitBtn.disabled = false;
+  }
+}
+
+// Stripe sends the buyer back to /app/?checkout=success|cancel (see SaleController).
+function showCheckoutResult() {
+  const params = new URLSearchParams(window.location.search);
+  const result = params.get('checkout');
+  if (result !== 'success' && result !== 'cancel') return;
+
+  checkoutBanner.className = `banner ${result}`;
+  checkoutBanner.textContent =
+    result === 'success'
+      ? 'Pago recibido. El pokemon pasa a "Vendido" apenas Stripe confirme el pago.'
+      : 'Pago cancelado. No se realizo ningun cobro.';
+  checkoutBanner.hidden = false;
+  window.history.replaceState(null, '', window.location.pathname);
+
+  // The webhook is asynchronous: it can arrive a moment after the redirect, so refresh a few times.
+  if (result === 'success') {
+    let refreshes = 0;
+    const timer = setInterval(() => {
+      loadPokemons();
+      if (++refreshes >= 5) clearInterval(timer);
+    }, 2000);
   }
 }
 
@@ -159,5 +228,8 @@ form.addEventListener('submit', handleSubmit);
 cancelEditBtn.addEventListener('click', resetForm);
 tbody.addEventListener('click', handleTableClick);
 filterButtons.forEach(btn => btn.addEventListener('click', handleFilterClick));
+buyForm.addEventListener('submit', handleBuySubmit);
+buyCancelBtn.addEventListener('click', () => buyDialog.close());
 
+showCheckoutResult();
 loadPokemons();

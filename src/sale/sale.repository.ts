@@ -1,16 +1,17 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { db } from "../storage/db.js";
-import { CreateSaleDto } from "./dto/create-sale.dto.js";
-import { Sale, SaleStatus } from "./entities/sale.entity.js";
+import { UpdateSaleDto } from "./dto/update-sale.dto.js";
+import { NewSale, Sale, SaleStatus } from "./entities/sale.entity.js";
 
+// Keys match the column names declared in db.ts (SQLite keeps them lowercase).
 type SaleRow = {
   id: number;
   client: string;
   address: string;
-  productId: number;
+  productid: number;
   price: number;
   date: string;
-  stripeData: string;
+  stripedata: string;
   status: SaleStatus;
 }
 
@@ -18,21 +19,19 @@ function rowToSale(row: SaleRow): Sale {
   return new Sale(row.id, {
     client: row.client,
     address: row.address,
-    productId: row.productId,
+    productId: row.productid,
     price: row.price,
     date: row.date,
-    stripeData: row.stripeData,
+    stripeData: row.stripedata,
     status: row.status
   })
 }
 
 @Injectable()
 export class SaleRepository {
-  constructor() {}
-
   findAll(): Sale[] {
     const rows = db.prepare('SELECT * FROM sale').all() as SaleRow[]
-    
+
     return rows.map(rowToSale)
   }
 
@@ -48,6 +47,25 @@ export class SaleRepository {
     return row ? rowToSale(row) : undefined;
   }
 
+  create(newSale: NewSale): Sale {
+    const { lastInsertRowid } = db
+      .prepare('INSERT INTO sale (client, address, productid, price, stripedata, status) VALUES (?, ?, ?, ?, ?, ?)')
+      .run(newSale.client, newSale.address, newSale.productId, newSale.price, newSale.stripeData, SaleStatus.PENDING);
+
+    return this.findById(Number(lastInsertRowid))!;
+  }
+
+  update(id: number, updateSaleDto: UpdateSaleDto): void {
+    const current = this.findById(id);
+
+    if (!current) return;
+
+    const client = updateSaleDto.client ?? current.client;
+    const address = updateSaleDto.address ?? current.address;
+
+    db.prepare('UPDATE sale SET client = ?, address = ? WHERE id = ?').run(client, address, id);
+  }
+
   markAsCompleted(id: number): Sale | undefined {
     db.prepare('UPDATE sale SET status = ? WHERE id = ?').run(SaleStatus.COMPLETED, id);
 
@@ -60,12 +78,7 @@ export class SaleRepository {
     return this.findById(id);
   }
 
-  create(createSaleDto: CreateSaleDto): Sale {
-    const s = createSaleDto;
-    const { lastInsertRowid } = db
-      .prepare('INSERT INTO sale (client, address, productid, price, date, stripedata, status) VALUES (?, ?, ?, ?, ?, ?, ?)')
-      .run(s.client, s.address, s.productId, s.price, s.date, s.stripeData, s.status);
-
-    return this.findById(Number(lastInsertRowid))!;
+  remove(id: number): void {
+    db.prepare('DELETE FROM sale WHERE id = ?').run(id);
   }
 }
